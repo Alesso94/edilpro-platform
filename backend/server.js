@@ -5,10 +5,23 @@ const multer = require('multer');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const fs = require('fs');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
-const JWT_SECRET = 'edilizia-platform-secret-key'; // In produzione, usare variabile d'ambiente
+const port = process.env.PORT || 3001;
+const JWT_SECRET = process.env.JWT_SECRET || 'edilizia-platform-secret-key';
+
+// Crea le cartelle necessarie se non esistono
+const uploadDir = path.join(__dirname, 'uploads');
+const documentsDir = path.join(uploadDir, 'documents');
+const cadDir = path.join(uploadDir, 'cad');
+
+[uploadDir, documentsDir, cadDir].forEach(dir => {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+        console.log(`Created directory: ${dir}`);
+    }
+});
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -291,6 +304,6 @@ app.get('/api/projects/:id/comments', (req, res) => {
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Avvio del server
-app.listen(PORT, () => {
-    console.log(`Server in esecuzione su http://localhost:${PORT}`);
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Server is running on port ${port}`);
 });
