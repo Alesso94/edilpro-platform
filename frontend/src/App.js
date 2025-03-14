@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './components/Home';
-import Auth from './components/Auth/index';
+import Auth from './components/Auth';
 import Projects from './components/Projects';
 import ProjectDetails from './components/ProjectDetails';
 import Chat from './components/Chat';
@@ -54,7 +54,6 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Auth />} />
           <Route path="/register" element={<Auth register />} />
-          <Route path="/auth" element={<Auth />} />
           <Route path="/verify-email/:token" element={<EmailVerification />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/projects/:id" element={<ProjectDetails />} />
