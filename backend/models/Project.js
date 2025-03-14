@@ -1,38 +1,46 @@
 const mongoose = require('mongoose');
 
 const taskSchema = new mongoose.Schema({
-    title: { type: String, required: true },
-    description: String,
-    dueDate: Date,
-    status: { 
-        type: String, 
-        enum: ['Non Iniziato', 'In Corso', 'Completato'],
-        default: 'Non Iniziato'
-    },
-    priority: {
+    name: {
         type: String,
-        enum: ['Bassa', 'Media', 'Alta'],
-        default: 'Media'
+        required: true
     },
-    assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    createdAt: { type: Date, default: Date.now }
+    completed: {
+        type: Boolean,
+        default: false
+    }
 });
 
 const projectSchema = new mongoose.Schema({
-    title: { type: String, required: true },
-    description: String,
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true },
-    budget: { type: Number, required: true },
-    status: { 
-        type: String, 
-        enum: ['Non Iniziato', 'In Corso', 'Completato', 'In Pausa'],
-        default: 'Non Iniziato'
+    title: {
+        type: String,
+        required: true
+    },
+    description: {
+        type: String,
+        required: true
+    },
+    startDate: {
+        type: Date,
+        required: true
+    },
+    endDate: {
+        type: Date,
+        required: true
+    },
+    budget: {
+        type: Number,
+        required: true
+    },
+    status: {
+        type: String,
+        required: true,
+        enum: ['In Corso', 'Completato', 'In Attesa', 'Cancellato', 'In Pianificazione']
     },
     category: {
         type: String,
         required: true,
-        enum: ['Ristrutturazione', 'Nuova Costruzione', 'Restauro', 'Progettazione', 'Altro']
+        enum: ['Ristrutturazione', 'Costruzione', 'Impianti', 'Design Interni', 'Manutenzione', 'Altro']
     },
     progress: {
         type: Number,
@@ -40,17 +48,20 @@ const projectSchema = new mongoose.Schema({
         min: 0,
         max: 100
     },
-    owner: {
+    tasks: [taskSchema],
+    user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
-    },
-    collaborators: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-    }],
-    tasks: [taskSchema],
-    createdAt: { type: Date, default: Date.now }
+    }
+}, {
+    timestamps: true
 });
 
-module.exports = mongoose.model('Project', projectSchema); 
+// Indice per migliorare le prestazioni delle query
+projectSchema.index({ user: 1, status: 1 });
+projectSchema.index({ title: 'text', description: 'text' }); // Per la ricerca testuale
+
+const Project = mongoose.model('Project', projectSchema);
+
+module.exports = Project; 
