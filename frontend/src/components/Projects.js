@@ -6,7 +6,6 @@ import axios from 'axios';
 import './Projects.css';
 import { useNavigate } from 'react-router-dom';
 import DocumentManager from './DocumentManager';
-import Login from './components/Login';
 
 export default function Projects({ user, onLogout }) {
     const PROJECT_STATUSES = [
