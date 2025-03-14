@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { FaProjectDiagram, FaCalendarAlt, FaMoneyBillWave, FaSearch, FaTrash, FaEdit, FaFile, FaComment, FaDownload, FaDraftingCompass, FaSignOutAlt, FaUser, FaUsers, FaCube } from 'react-icons/fa';
+import { FaProjectDiagram, FaCalendarAlt, FaMoneyBillWave, FaSearch, FaTrash, FaEdit, FaFile, FaComment, FaDownload, FaDraftingCompass, FaSignOutAlt, FaUser, FaUsers } from 'react-icons/fa';
 import { MdBuild, MdTimeline, MdCategory, MdAttachFile, Md3DRotation } from 'react-icons/md';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
@@ -607,7 +607,7 @@ export default function Projects({ user, onLogout }) {
                                             setSelectedProjectId(project.id);
                                         }}
                                     >
-                                        <FaCube /> Carica CAD
+                                        <Md3DRotation /> Carica CAD
                                     </button>
                                 </div>
                                 

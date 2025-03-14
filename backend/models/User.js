@@ -3,23 +3,18 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const userSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true
+    },
     email: {
         type: String,
         required: true,
-        unique: true,
-        trim: true,
-        lowercase: true
+        unique: true
     },
     password: {
         type: String,
-        required: true,
-        minlength: 7,
-        trim: true
-    },
-    name: {
-        type: String,
-        required: true,
-        trim: true
+        required: true
     },
     role: {
         type: String,
@@ -43,7 +38,7 @@ const userSchema = new mongoose.Schema({
     // Campi specifici per professionisti
     profession: {
         type: String,
-        required: function() { return this.role === 'professional'; }
+        required: true
     },
     license: {
         type: String,
@@ -71,6 +66,9 @@ const userSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+
+// Rimuoviamo eventuali indici duplicati prima di creare quello nuovo
+userSchema.index({ email: 1 }, { unique: true });
 
 // Hash della password prima del salvataggio
 userSchema.pre('save', async function (next) {
