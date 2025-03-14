@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { FaProjectDiagram, FaCalendarAlt, FaMoneyBillWave, FaSearch, FaTrash, FaEdit, FaFile, FaComment, FaDownload, FaDraftingCompass, FaSignOutAlt, FaUser, FaUsers } from 'react-icons/fa';
-import { MdBuild, MdTimeline, MdCategory, MdAttachFile, Md3DRotation } from 'react-icons/md';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { FaProjectDiagram, FaCalendarAlt, FaMoneyBillWave, FaSearch, FaTrash, FaEdit, FaFile, FaComment, FaDownload, FaDraftingCompass, FaSignOutAlt, FaUser, FaUsers, FaCube } from 'react-icons/fa';
+import { MdBuild, MdTimeline, MdCategory, MdAttachFile } from 'react-icons/md';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import './Projects.css';
@@ -69,7 +69,7 @@ export default function Projects({ user, onLogout }) {
 
     // Stati per file CAD
     const [projectCadFiles, setProjectCadFiles] = useState({});
-    const CAD_FILE_TYPES = ['.dwg', '.dxf', '.rvt', '.rfa', '.ifc'];
+    const CAD_FILE_TYPES = useMemo(() => ['.dwg', '.dxf', '.rvt', '.rfa', '.ifc'], []);
 
     // All'interno del componente, aggiungi una variabile di stato per il progetto selezionato
     const [selectedProject, setSelectedProject] = useState(null);
@@ -607,7 +607,7 @@ export default function Projects({ user, onLogout }) {
                                             setSelectedProjectId(project.id);
                                         }}
                                     >
-                                        <Md3DRotation /> Carica CAD
+                                        <FaCube /> Carica CAD
                                     </button>
                                 </div>
                                 
