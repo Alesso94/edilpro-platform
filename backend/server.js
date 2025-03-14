@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -6,10 +7,29 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
+const mongoose = require('mongoose');
+
+// Import Models
+const User = require('./models/User');
+const Project = require('./models/Project');
+const Document = require('./models/Document');
+const projectRoutes = require('./routes/projects');
+const authRoutes = require('./routes/users');
+const documentRoutes = require('./routes/documents');
+const usersRoutes = require('./routes/users');
+const projectsRoutes = require('./routes/projects');
+const documentsRoutes = require('./routes/documents');
+const professionalsRoutes = require('./routes/professionals');
 
 const app = express();
 const port = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET || 'edilizia-platform-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
+const MONGODB_URI = process.env.MONGODB_URI;
+
+// Connessione a MongoDB
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Crea le cartelle necessarie se non esistono
 const uploadDir = path.join(__dirname, 'uploads');
@@ -76,206 +96,258 @@ let users = [
     }
 ];
 
-// Middleware di autenticazione
-const authenticateToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) {
-        return res.status(401).json({ message: 'Token di autenticazione mancante' });
-    }
-
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) {
-            return res.status(403).json({ message: 'Token non valido' });
-        }
-        req.user = user;
-        next();
-    });
-};
-
 // API di autenticazione
 app.post('/api/auth/register', async (req, res) => {
-    const { email, password, name, profession } = req.body;
+    try {
+        const { email, password, name, profession, license } = req.body;
+        
+        // Verifica se l'utente esiste già
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: 'Email già registrata' });
+        }
 
-    if (users.find(u => u.email === email)) {
-        return res.status(400).json({ message: 'Email già registrata' });
+        // Crea nuovo utente
+        const user = new User({
+            email,
+            password,
+            name,
+            profession,
+            license,
+            role: 'professional'
+        });
+
+        // Genera token di verifica
+        const verificationToken = jwt.sign(
+            { userId: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+        
+        user.verificationToken = verificationToken;
+        user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        await user.save();
+
+        res.status(201).json({ 
+            message: 'Registrazione completata. Controlla la tua email per la verifica.',
+            verificationToken
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Errore durante la registrazione', error: error.message });
     }
+});
 
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    const newUser = {
-        id: users.length + 1,
-        email,
-        password: hashedPassword,
-        name,
-        role: 'professional',
-        profession,
-        verified: false // Richiede verifica admin
-    };
+app.post('/api/auth/verify', async (req, res) => {
+    try {
+        const { token } = req.body;
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        const user = await User.findOne({
+            _id: decoded.userId,
+            verificationToken: token,
+            verificationTokenExpires: { $gt: Date.now() }
+        });
 
-    users.push(newUser);
-    res.status(201).json({ message: 'Registrazione completata. In attesa di verifica.' });
+        if (!user) {
+            return res.status(400).json({ message: 'Token non valido o scaduto' });
+        }
+
+        user.isVerified = true;
+        user.verificationToken = undefined;
+        user.verificationTokenExpires = undefined;
+        await user.save();
+
+        res.json({ message: 'Email verificata con successo' });
+    } catch (error) {
+        res.status(400).json({ message: 'Errore durante la verifica', error: error.message });
+    }
 });
 
 app.post('/api/auth/login', async (req, res) => {
-    const { email, password } = req.body;
-    const user = users.find(u => u.email === email);
-
-    if (!user || !bcrypt.compareSync(password, user.password)) {
-        return res.status(401).json({ message: 'Credenziali non valide' });
-    }
-
-    if (!user.verified) {
-        return res.status(403).json({ message: 'Account in attesa di verifica' });
-    }
-
-    const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
-        JWT_SECRET,
-        { expiresIn: '24h' }
-    );
-
-    res.json({
-        token,
-        user: {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
-            profession: user.profession
+    try {
+        const { email, password } = req.body;
+        const user = await User.findByCredentials(email, password);
+        
+        if (!user.isVerified) {
+            return res.status(403).json({ message: 'Account non verificato. Verifica la tua email.' });
         }
-    });
+
+        const token = await user.generateAuthToken();
+        res.json({
+            user: user.toJSON(),
+            token
+        });
+    } catch (error) {
+        res.status(401).json({ message: 'Credenziali non valide' });
+    }
 });
 
+// Middleware di autenticazione
+const authenticateToken = async (req, res, next) => {
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+
+        if (!token) {
+            return res.status(401).json({ message: 'Token di autenticazione mancante' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findOne({ _id: decoded._id, 'tokens.token': token });
+
+        if (!user) {
+            throw new Error();
+        }
+
+        req.token = token;
+        req.user = user;
+        next();
+    } catch (error) {
+        res.status(403).json({ message: 'Token non valido' });
+    }
+};
+
 // Protezione delle API esistenti
-app.use('/api/projects', authenticateToken);
+app.use('/api/auth', authRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/documents', documentRoutes);
 app.use('/api/projects/:id/documents', authenticateToken);
 app.use('/api/projects/:id/cad', authenticateToken);
 app.use('/api/projects/:id/comments', authenticateToken);
 
-// API per i progetti
-app.get('/api/projects', (req, res) => {
-    res.json(projects);
-});
-
-app.post('/api/projects', (req, res) => {
-    const newProject = {
-        ...req.body,
-        id: projects.length + 1,
-        tasks: [],
-        progress: 0
-    };
-    projects.push(newProject);
-    res.status(201).json(newProject);
-});
-
-app.put('/api/projects/:id', (req, res) => {
-    const id = parseInt(req.params.id);
-    projects = projects.map(project =>
-        project.id === id ? { ...project, ...req.body } : project
-    );
-    res.json(projects.find(p => p.id === id));
-});
-
-app.delete('/api/projects/:id', (req, res) => {
-    const id = parseInt(req.params.id);
-    projects = projects.filter(project => project.id !== id);
-    res.json({ message: 'Progetto eliminato' });
-});
-
-// API per le attività
-app.post('/api/projects/:id/tasks', (req, res) => {
-    const projectId = parseInt(req.params.id);
-    const project = projects.find(p => p.id === projectId);
-    if (!project) return res.status(404).json({ message: 'Progetto non trovato' });
-
-    const newTask = {
-        id: project.tasks.length + 1,
-        name: req.body.name,
-        completed: false
-    };
-    project.tasks.push(newTask);
-    res.status(201).json(newTask);
-});
-
-app.put('/api/projects/:projectId/tasks/:taskId', (req, res) => {
-    const projectId = parseInt(req.params.projectId);
-    const taskId = parseInt(req.params.taskId);
-    const project = projects.find(p => p.id === projectId);
-    if (!project) return res.status(404).json({ message: 'Progetto non trovato' });
-
-    project.tasks = project.tasks.map(task =>
-        task.id === taskId ? { ...task, completed: !task.completed } : task
-    );
-    project.progress = Math.round(
-        (project.tasks.filter(task => task.completed).length / project.tasks.length) * 100
-    );
-    res.json(project);
-});
+// Rotte
+app.use('/api/users', usersRoutes);
+app.use('/api/projects', projectsRoutes);
+app.use('/api/documents', documentsRoutes);
+app.use('/api/professionals', professionalsRoutes);
 
 // API per i documenti
-app.post('/api/projects/:id/documents', upload.array('files'), (req, res) => {
-    const projectId = parseInt(req.params.id);
-    const uploadedFiles = req.files.map(file => ({
-        id: Date.now(),
-        name: file.originalname,
-        size: file.size,
-        type: file.mimetype,
-        path: file.path,
-        uploadDate: new Date().toISOString()
-    }));
+app.post('/api/projects/:id/documents', authenticateToken, upload.array('files'), async (req, res) => {
+    try {
+        const project = await Project.findOne({ _id: req.params.id, owner: req.user._id });
+        if (!project) {
+            return res.status(404).json({ message: 'Progetto non trovato' });
+        }
 
-    projectDocuments[projectId] = [
-        ...(projectDocuments[projectId] || []),
-        ...uploadedFiles
-    ];
-    res.status(201).json(uploadedFiles);
+        const uploadedFiles = await Promise.all(req.files.map(async file => {
+            const document = new Document({
+                name: file.filename,
+                type: 'document',
+                originalName: file.originalname,
+                path: file.path,
+                size: file.size,
+                mimeType: file.mimetype,
+                project: project._id,
+                uploadedBy: req.user._id
+            });
+            await document.save();
+            return document;
+        }));
+
+        res.status(201).json(uploadedFiles);
+    } catch (error) {
+        res.status(400).json({ message: 'Errore nel caricamento dei documenti', error: error.message });
+    }
 });
 
-app.get('/api/projects/:id/documents', (req, res) => {
-    const projectId = parseInt(req.params.id);
-    res.json(projectDocuments[projectId] || []);
+app.get('/api/projects/:id/documents', authenticateToken, async (req, res) => {
+    try {
+        const documents = await Document.find({
+            project: req.params.id,
+            type: 'document'
+        }).populate('uploadedBy', 'name email');
+        res.json(documents);
+    } catch (error) {
+        res.status(500).json({ message: 'Errore nel recupero dei documenti', error: error.message });
+    }
 });
 
-app.delete('/api/projects/:projectId/documents/:documentId', (req, res) => {
-    const { projectId, documentId } = req.params;
-    projectDocuments[projectId] = projectDocuments[projectId].filter(
-        doc => doc.id !== parseInt(documentId)
-    );
-    res.json({ message: 'Documento eliminato' });
+app.delete('/api/projects/:projectId/documents/:documentId', authenticateToken, async (req, res) => {
+    try {
+        const document = await Document.findOneAndDelete({
+            _id: req.params.documentId,
+            project: req.params.projectId,
+            uploadedBy: req.user._id
+        });
+
+        if (!document) {
+            return res.status(404).json({ message: 'Documento non trovato' });
+        }
+
+        // Elimina il file fisico
+        fs.unlink(document.path, (err) => {
+            if (err) console.error('Errore nell\'eliminazione del file:', err);
+        });
+
+        res.json({ message: 'Documento eliminato' });
+    } catch (error) {
+        res.status(500).json({ message: 'Errore nell\'eliminazione del documento', error: error.message });
+    }
 });
 
 // API per i file CAD
-app.post('/api/projects/:id/cad', upload.array('files'), (req, res) => {
-    const projectId = parseInt(req.params.id);
-    const uploadedFiles = req.files.map(file => ({
-        id: Date.now(),
-        name: file.originalname,
-        size: file.size,
-        type: file.mimetype,
-        path: file.path,
-        extension: path.extname(file.originalname),
-        uploadDate: new Date().toISOString()
-    }));
+app.post('/api/projects/:id/cad', authenticateToken, upload.array('files'), async (req, res) => {
+    try {
+        const project = await Project.findOne({ _id: req.params.id, owner: req.user._id });
+        if (!project) {
+            return res.status(404).json({ message: 'Progetto non trovato' });
+        }
 
-    projectCadFiles[projectId] = [
-        ...(projectCadFiles[projectId] || []),
-        ...uploadedFiles
-    ];
-    res.status(201).json(uploadedFiles);
+        const uploadedFiles = await Promise.all(req.files.map(async file => {
+            const document = new Document({
+                name: file.filename,
+                type: 'cad',
+                originalName: file.originalname,
+                path: file.path,
+                size: file.size,
+                mimeType: file.mimetype,
+                project: project._id,
+                uploadedBy: req.user._id
+            });
+            await document.save();
+            return document;
+        }));
+
+        res.status(201).json(uploadedFiles);
+    } catch (error) {
+        res.status(400).json({ message: 'Errore nel caricamento dei file CAD', error: error.message });
+    }
 });
 
-app.get('/api/projects/:id/cad', (req, res) => {
-    const projectId = parseInt(req.params.id);
-    res.json(projectCadFiles[projectId] || []);
+app.get('/api/projects/:id/cad', authenticateToken, async (req, res) => {
+    try {
+        const documents = await Document.find({
+            project: req.params.id,
+            type: 'cad'
+        }).populate('uploadedBy', 'name email');
+        res.json(documents);
+    } catch (error) {
+        res.status(500).json({ message: 'Errore nel recupero dei file CAD', error: error.message });
+    }
 });
 
-app.delete('/api/projects/:projectId/cad/:fileId', (req, res) => {
-    const { projectId, fileId } = req.params;
-    projectCadFiles[projectId] = projectCadFiles[projectId].filter(
-        file => file.id !== parseInt(fileId)
-    );
-    res.json({ message: 'File CAD eliminato' });
+app.delete('/api/projects/:projectId/cad/:fileId', authenticateToken, async (req, res) => {
+    try {
+        const document = await Document.findOneAndDelete({
+            _id: req.params.fileId,
+            project: req.params.projectId,
+            type: 'cad',
+            uploadedBy: req.user._id
+        });
+
+        if (!document) {
+            return res.status(404).json({ message: 'File CAD non trovato' });
+        }
+
+        // Elimina il file fisico
+        fs.unlink(document.path, (err) => {
+            if (err) console.error('Errore nell\'eliminazione del file:', err);
+        });
+
+        res.json({ message: 'File CAD eliminato' });
+    } catch (error) {
+        res.status(500).json({ message: 'Errore nell\'eliminazione del file CAD', error: error.message });
+    }
 });
 
 // API per i commenti
@@ -303,7 +375,33 @@ app.get('/api/projects/:id/comments', (req, res) => {
 // Cartella per i file caricati
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Gestione errori non catturati
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (error) => {
+    console.error('Unhandled Rejection:', error);
+});
+
 // Avvio del server
-app.listen(port, '0.0.0.0', () => {
+const server = app.listen(port, '0.0.0.0', () => {
     console.log(`Server is running on port ${port}`);
+});
+
+// Gestione chiusura graziosa
+process.on('SIGTERM', () => {
+    console.log('Received SIGTERM. Performing graceful shutdown...');
+    server.close(() => {
+        console.log('Server closed. Exiting process.');
+        process.exit(0);
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('Received SIGINT. Performing graceful shutdown...');
+    server.close(() => {
+        console.log('Server closed. Exiting process.');
+        process.exit(0);
+    });
 });

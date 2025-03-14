@@ -1,87 +1,163 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaUserCircle, FaEnvelope, FaLock } from 'react-icons/fa';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { FaEnvelope, FaLock, FaIdCard, FaUserTie, FaShieldAlt } from 'react-icons/fa';
 import axios from 'axios';
 import './Auth.css';
 
 const Auth = ({ onLogin }) => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const redirectTo = location.state?.redirectTo || '/projects';
+    const redirectMessage = location.state?.message;
+    
     const [isLogin, setIsLogin] = useState(true);
+    const [showAdminCode, setShowAdminCode] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
         password: '',
         name: '',
-        profession: ''
+        registrationNumber: '',
+        professionalCategory: '',
+        adminCode: ''
     });
     const [error, setError] = useState('');
+    const [notification, setNotification] = useState(redirectMessage || '');
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         
         try {
-            const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-            const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}${endpoint}`, formData);
-            
-            if (response.data.token) {
+            if (isLogin) {
+                const response = await axios.post('http://localhost:3001/api/users/login', {
+                    email: formData.email,
+                    password: formData.password
+                });
+                
                 localStorage.setItem('token', response.data.token);
                 localStorage.setItem('user', JSON.stringify(response.data.user));
-                onLogin(response.data.user);
-                navigate('/projects');
+                if (response.data.user.isAdmin) {
+                    localStorage.setItem('isAdmin', 'true');
+                }
+                
+                if (onLogin) {
+                    onLogin(response.data.user);
+                }
+                
+                if (redirectTo) {
+                    navigate(redirectTo);
+                } else if (response.data.user.isAdmin) {
+                    navigate('/admin');
+                } else {
+                    navigate('/projects');
+                }
             } else {
-                setError('Registrazione completata. Effettua il login per continuare.');
-                setIsLogin(true);
-            }
-        } catch (err) {
-            setError(err.response?.data?.message || 'Si è verificato un errore');
-        }
-    };
+                const userData = {
+                    email: formData.email,
+                    password: formData.password,
+                    name: formData.name,
+                    registrationNumber: formData.registrationNumber,
+                    professionalCategory: formData.professionalCategory
+                };
 
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
+                if (showAdminCode) {
+                    userData.adminCode = formData.adminCode;
+                }
+
+                const response = await axios.post('http://localhost:3001/api/users', userData);
+                
+                localStorage.setItem('token', response.data.token);
+                localStorage.setItem('user', JSON.stringify(response.data.user));
+                if (response.data.user.isAdmin) {
+                    localStorage.setItem('isAdmin', 'true');
+                }
+                
+                if (onLogin) {
+                    onLogin(response.data.user);
+                }
+
+                navigate('/projects');
+            }
+        } catch (error) {
+            console.error('Auth error:', error);
+            if (error.response && error.response.data) {
+                setError(error.response.data.message || 'Errore durante l\'autenticazione');
+            } else {
+                setError('Errore durante l\'autenticazione. Riprova più tardi.');
+            }
+        }
     };
 
     return (
         <div className="auth-page">
             <div className="auth-container">
                 <div className="auth-header">
-                    <FaUserCircle className="auth-icon" />
+                    <FaUserTie className="auth-icon" />
                     <h2>{isLogin ? 'Accedi' : 'Registrati'}</h2>
-                    <p>Area riservata ai professionisti</p>
                 </div>
                 
+                {error && <div className="error-message">{error}</div>}
+                {notification && <div className="notification-message">{notification}</div>}
+                
                 <form onSubmit={handleSubmit} className="auth-form">
-                    {error && <div className="error-message">{error}</div>}
-                    
                     {!isLogin && (
                         <>
                             <div className="form-group">
                                 <label>Nome Completo</label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    placeholder="Es: Arch. Mario Rossi"
-                                    required
-                                />
+                                <div className="input-with-icon">
+                                    <FaUserTie className="input-icon" />
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleInputChange}
+                                        placeholder="Es: Arch. Mario Rossi"
+                                        required
+                                    />
+                                </div>
                             </div>
+                            
                             <div className="form-group">
-                                <label>Professione</label>
-                                <select
-                                    name="profession"
-                                    value={formData.profession}
-                                    onChange={handleChange}
-                                    required
-                                >
-                                    <option value="">Seleziona professione</option>
-                                    <option value="architect">Architetto</option>
-                                    <option value="engineer">Ingegnere</option>
-                                    <option value="surveyor">Geometra</option>
-                                </select>
+                                <label>Numero Iscrizione Albo</label>
+                                <div className="input-with-icon">
+                                    <FaIdCard className="input-icon" />
+                                    <input
+                                        type="text"
+                                        name="registrationNumber"
+                                        value={formData.registrationNumber}
+                                        onChange={handleInputChange}
+                                        placeholder="Inserisci il numero di iscrizione all'albo"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Categoria Professionale</label>
+                                <div className="input-with-icon">
+                                    <FaUserTie className="input-icon" />
+                                    <select
+                                        name="professionalCategory"
+                                        value={formData.professionalCategory}
+                                        onChange={handleInputChange}
+                                        required
+                                    >
+                                        <option value="">Seleziona una categoria</option>
+                                        <option value="architetto">Architetto</option>
+                                        <option value="ingegnere">Ingegnere</option>
+                                        <option value="geometra">Geometra</option>
+                                        <option value="perito">Perito</option>
+                                        <option value="altro">Altro</option>
+                                    </select>
+                                </div>
                             </div>
                         </>
                     )}
@@ -94,8 +170,8 @@ const Auth = ({ onLogin }) => {
                                 type="email"
                                 name="email"
                                 value={formData.email}
-                                onChange={handleChange}
-                                placeholder="La tua email professionale"
+                                onChange={handleInputChange}
+                                placeholder="La tua email"
                                 required
                             />
                         </div>
@@ -109,12 +185,42 @@ const Auth = ({ onLogin }) => {
                                 type="password"
                                 name="password"
                                 value={formData.password}
-                                onChange={handleChange}
+                                onChange={handleInputChange}
                                 placeholder="La tua password"
                                 required
                             />
                         </div>
                     </div>
+
+                    {!isLogin && (
+                        <div className="admin-option">
+                            <button
+                                type="button"
+                                className={`admin-btn ${showAdminCode ? 'active' : ''}`}
+                                onClick={() => setShowAdminCode(!showAdminCode)}
+                            >
+                                <FaShieldAlt />
+                                Registrati come Admin
+                            </button>
+                        </div>
+                    )}
+
+                    {showAdminCode && !isLogin && (
+                        <div className="form-group">
+                            <label>Codice Admin</label>
+                            <div className="input-with-icon">
+                                <FaShieldAlt className="input-icon" />
+                                <input
+                                    type="password"
+                                    name="adminCode"
+                                    value={formData.adminCode}
+                                    onChange={handleInputChange}
+                                    placeholder="Inserisci il codice admin"
+                                    required
+                                />
+                            </div>
+                        </div>
+                    )}
 
                     <button type="submit" className="auth-submit">
                         {isLogin ? 'Accedi' : 'Registrati'}
@@ -127,6 +233,7 @@ const Auth = ({ onLogin }) => {
                         <button 
                             onClick={() => setIsLogin(!isLogin)}
                             className="switch-btn"
+                            type="button"
                         >
                             {isLogin ? 'Registrati' : 'Accedi'}
                         </button>

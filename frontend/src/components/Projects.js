@@ -1,9 +1,11 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { FaProjectDiagram, FaCalendarAlt, FaMoneyBillWave, FaSearch, FaTrash, FaEdit, FaFile, FaComment, FaDownload, FaDraftingCompass, FaSignOutAlt, FaUser } from 'react-icons/fa';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { FaProjectDiagram, FaCalendarAlt, FaMoneyBillWave, FaSearch, FaTrash, FaEdit, FaFile, FaComment, FaDownload, FaDraftingCompass, FaSignOutAlt, FaUser, FaUsers } from 'react-icons/fa';
 import { MdBuild, MdTimeline, MdCategory, MdAttachFile, Md3DRotation } from 'react-icons/md';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import './Projects.css';
+import { useNavigate } from 'react-router-dom';
+import DocumentManager from './DocumentManager';
 
 export default function Projects({ user, onLogout }) {
     const PROJECT_STATUSES = [
@@ -69,6 +71,9 @@ export default function Projects({ user, onLogout }) {
     const [projectCadFiles, setProjectCadFiles] = useState({});
     const CAD_FILE_TYPES = ['.dwg', '.dxf', '.rvt', '.rfa', '.ifc'];
 
+    // All'interno del componente, aggiungi una variabile di stato per il progetto selezionato
+    const [selectedProject, setSelectedProject] = useState(null);
+
     // Configurazione axios con il token
     const axiosAuth = axios.create({
         baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3001',
@@ -77,18 +82,18 @@ export default function Projects({ user, onLogout }) {
         }
     });
 
-    useEffect(() => {
-        fetchProjects();
-    }, []);
-
-    const fetchProjects = async () => {
+    const fetchProjects = useCallback(async () => {
         try {
             const response = await axiosAuth.get('/api/projects');
             setProjects(response.data);
         } catch (error) {
             console.error('Errore nel caricamento dei progetti:', error);
         }
-    };
+    }, [axiosAuth]);
+
+    useEffect(() => {
+        fetchProjects();
+    }, [fetchProjects]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -191,7 +196,7 @@ export default function Projects({ user, onLogout }) {
         } catch (error) {
             console.error('Errore nel caricamento dei documenti:', error);
         }
-    }, []);
+    }, [axiosAuth]);
 
     // Configurazione dropzone per documenti
     const { getRootProps, getInputProps } = useDropzone({
@@ -200,9 +205,9 @@ export default function Projects({ user, onLogout }) {
     });
 
     // Funzione per verificare se un file è di tipo CAD
-    const isCADFile = (filename) => {
+    const isCADFile = useCallback((filename) => {
         return CAD_FILE_TYPES.some(ext => filename.toLowerCase().endsWith(ext));
-    };
+    }, [CAD_FILE_TYPES]);
 
     // Funzione per gestire l'upload dei file CAD
     const onCadDrop = useCallback(async (acceptedFiles, projectId) => {
@@ -234,7 +239,7 @@ export default function Projects({ user, onLogout }) {
         } catch (error) {
             console.error('Errore nel caricamento dei file CAD:', error);
         }
-    }, [isCADFile]);
+    }, [axiosAuth, isCADFile]);
 
     // Configurazione dropzone per i file CAD
     const { getRootProps: getCadRootProps, getInputProps: getCadInputProps } = useDropzone({
@@ -309,6 +314,24 @@ export default function Projects({ user, onLogout }) {
             }
         });
 
+    const navigate = useNavigate();
+
+    // Nella funzione che gestisce il click su un progetto
+    const handleProjectClick = (project) => {
+        // Verifica se il progetto è un oggetto fittizio (ha un id numerico) o un progetto reale (ha un _id MongoDB)
+        const isRealProject = project._id && typeof project._id === 'string' && project._id.length === 24;
+        
+        // Se è un progetto fittizio, aggiungiamo un flag per indicare che è un progetto demo
+        const projectWithId = {
+            ...project,
+            _id: project._id || project.id, // Usiamo _id se esiste, altrimenti id
+            isDemo: !isRealProject
+        };
+        
+        setSelectedProject(projectWithId);
+        console.log("Progetto selezionato:", projectWithId);
+    };
+
     return (
         <div className="projects-page">
             <nav className="projects-navbar">
@@ -322,6 +345,10 @@ export default function Projects({ user, onLogout }) {
                         <span>{user.name}</span>
                         <span className="user-role">({user.profession})</span>
                     </div>
+                    <button onClick={() => navigate('/chat')} className="chat-btn">
+                        <FaUsers />
+                        <span>Chat</span>
+                    </button>
                     <button onClick={onLogout} className="logout-btn">
                         <FaSignOutAlt />
                         <span>Logout</span>
@@ -477,19 +504,25 @@ export default function Projects({ user, onLogout }) {
                     </div>
 
                     {filteredAndSortedProjects.map(project => (
-                        <div key={project.id} className="project-card">
+                        <div key={project.id} className="project-card" onClick={() => handleProjectClick(project)}>
                             <div className="project-header">
                                 <h3>{project.title}</h3>
                                 <div className="project-actions">
                                     <button 
                                         className="icon-btn edit"
-                                        onClick={() => handleEdit(project)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleEdit(project);
+                                        }}
                                     >
                                         <FaEdit />
                                     </button>
                                     <button 
                                         className="icon-btn delete"
-                                        onClick={() => handleDelete(project.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDelete(project.id);
+                                        }}
                                     >
                                         <FaTrash />
                                     </button>
@@ -533,7 +566,10 @@ export default function Projects({ user, onLogout }) {
                                 <div className="tasks-header">
                                     <h4><MdTimeline /> Attività</h4>
                                     <button 
-                                        onClick={() => addTask(project.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            addTask(project.id);
+                                        }}
                                         className="add-task-btn"
                                     >
                                         + Aggiungi
@@ -544,7 +580,10 @@ export default function Projects({ user, onLogout }) {
                                         <div 
                                             key={task.id} 
                                             className={`task-item ${task.completed ? 'completed' : ''}`}
-                                            onClick={() => toggleTask(project.id, task.id)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleTask(project.id, task.id);
+                                            }}
                                         >
                                             <input
                                                 type="checkbox"
@@ -563,7 +602,10 @@ export default function Projects({ user, onLogout }) {
                                     <h4><FaDraftingCompass /> File CAD</h4>
                                     <button 
                                         className="upload-btn cad"
-                                        onClick={() => setSelectedProjectId(project.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedProjectId(project.id);
+                                        }}
                                     >
                                         <Md3DRotation /> Carica CAD
                                     </button>
@@ -595,14 +637,18 @@ export default function Projects({ user, onLogout }) {
                                             <div className="cad-file-actions">
                                                 <button 
                                                     className="icon-btn download"
-                                                    onClick={() => handleDownload(cad)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDownload(cad);
+                                                    }}
                                                     title="Scarica"
                                                 >
                                                     <FaDownload />
                                                 </button>
                                                 <button 
                                                     className="icon-btn delete"
-                                                    onClick={() => {
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
                                                         setProjectCadFiles(prev => ({
                                                             ...prev,
                                                             [project.id]: prev[project.id].filter(f => f.id !== cad.id)
@@ -624,7 +670,10 @@ export default function Projects({ user, onLogout }) {
                                     <h4><FaFile /> Documenti</h4>
                                     <button 
                                         className="upload-btn"
-                                        onClick={() => setSelectedProjectId(project.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedProjectId(project.id);
+                                        }}
                                     >
                                         <MdAttachFile /> Carica
                                     </button>
@@ -644,13 +693,17 @@ export default function Projects({ user, onLogout }) {
                                             <div className="document-actions">
                                                 <button 
                                                     className="icon-btn download"
-                                                    onClick={() => handleDownload(doc)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDownload(doc);
+                                                    }}
                                                 >
                                                     <FaDownload />
                                                 </button>
                                                 <button 
                                                     className="icon-btn delete"
-                                                    onClick={() => {
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
                                                         setProjectDocuments(prev => ({
                                                             ...prev,
                                                             [project.id]: prev[project.id].filter(d => d.id !== doc.id)
@@ -693,7 +746,10 @@ export default function Projects({ user, onLogout }) {
                                     />
                                     <button 
                                         className="submit-btn"
-                                        onClick={() => handleAddComment(project.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleAddComment(project.id);
+                                        }}
                                     >
                                         Invia
                                     </button>
@@ -702,6 +758,42 @@ export default function Projects({ user, onLogout }) {
                         </div>
                     ))}
                 </section>
+
+                {selectedProject && (
+                    <div className="project-details-container">
+                        <div className="project-details">
+                            <h2>{selectedProject.title}</h2>
+                            <p className="project-description">{selectedProject.description}</p>
+                            
+                            {selectedProject.isDemo ? (
+                                <div className="demo-message">
+                                    <p>Questo è un progetto dimostrativo. La gestione documenti è disponibile solo per progetti reali.</p>
+                                    <p>Crea un nuovo progetto per utilizzare tutte le funzionalità.</p>
+                                    <button 
+                                        className="create-project-btn"
+                                        onClick={() => {
+                                            // Scorri fino alla sezione di creazione progetto
+                                            const newProjectSection = document.querySelector('.new-project-section');
+                                            if (newProjectSection) {
+                                                newProjectSection.scrollIntoView({ behavior: 'smooth' });
+                                                // Evidenzia il form
+                                                newProjectSection.classList.add('highlight');
+                                                // Rimuovi l'evidenziazione dopo 2 secondi
+                                                setTimeout(() => {
+                                                    newProjectSection.classList.remove('highlight');
+                                                }, 2000);
+                                            }
+                                        }}
+                                    >
+                                        Crea Nuovo Progetto
+                                    </button>
+                                </div>
+                            ) : (
+                                <DocumentManager projectId={selectedProject._id} />
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

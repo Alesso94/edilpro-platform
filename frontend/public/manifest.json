@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Edilizia Platform",
+  "name": "Piattaforma per la gestione di progetti edilizi",
   "icons": [
     {
       "src": "favicon.ico",
