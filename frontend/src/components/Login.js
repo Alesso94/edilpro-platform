@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 import './Auth.css';
 import { Link } from 'react-router-dom';
 
@@ -18,7 +19,7 @@ const Login = () => {
       try {
         setApiStatus('checking');
         console.log('Controllo se il backend è raggiungibile...');
-        await axios.get('http://localhost:3001/api');
+        await axios.get(`${API_URL}/api`);
         setApiStatus('online');
         console.log('Backend online');
       } catch (err) {
@@ -48,7 +49,7 @@ const Login = () => {
         throw new Error('Il server backend non è raggiungibile. Riprova più tardi.');
       }
       
-      const response = await axios.post('http://localhost:3001/api/auth/login', { email, password });
+      const response = await axios.post(`${API_URL}/api/auth/login`, { email, password });
       console.log('Risposta dal server:', response.data);
       setSuccessMsg('Login riuscito! Reindirizzamento...');
       localStorage.setItem('token', response.data.token);

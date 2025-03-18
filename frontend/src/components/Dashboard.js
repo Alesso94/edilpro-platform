@@ -5,6 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import './Dashboard.css';
 import Profile from './Profile';
 import NewProject from './NewProject';
+import { API_URL } from '../config';
 
 // Componente per la lista dei progetti
 const ProjectsList = ({ projects, loading, error }) => {
@@ -99,7 +100,7 @@ const Dashboard = () => {
           return;
         }
         
-        const response = await axios.get('http://localhost:3001/api/projects', {
+        const response = await axios.get(`${API_URL}/api/projects`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

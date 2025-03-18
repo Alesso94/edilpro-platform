@@ -23,7 +23,7 @@ const professionalsRoutes = require('./routes/professionals');
 const settingsRoutes = require('./routes/settings');
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3002;
 const JWT_SECRET = process.env.JWT_SECRET;
 const MONGODB_URI = process.env.MONGODB_URI;
 

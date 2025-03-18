@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import './Settings.css';
+import { API_URL } from '../config';
 
 function Settings() {
     const { t, language, changeLanguage } = useLanguage();
@@ -58,7 +59,7 @@ function Settings() {
             }
 
             console.log('Richiesta impostazioni con token:', token);
-            const response = await axios.get('http://localhost:3001/api/settings', {
+            const response = await axios.get(`${API_URL}/api/settings`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -106,7 +107,7 @@ function Settings() {
             }
 
             console.log('Invio aggiornamento impostazioni:', settings);
-            const response = await axios.put('http://localhost:3001/api/settings', settings, {
+            const response = await axios.put(`${API_URL}/api/settings`, settings, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
