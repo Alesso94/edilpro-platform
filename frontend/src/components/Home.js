@@ -1,6 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './Home.css';
+// Temporaneamente usiamo un placeholder per la dashboard
+import dashboardImg from '../images/dashboard-preview.png';
+import documentsImg from '../images/contract-document.png';
+import contractImg from '../images/contract-document.png';
 
 const Home = () => {
   const isAuthenticated = localStorage.getItem('token') !== null;
@@ -45,7 +49,9 @@ const Home = () => {
         <h2>I Nostri Servizi</h2>
         <div className="services-grid">
           <div className="service-card">
-            <div className="service-icon">📋</div>
+            <div className="service-icon">
+              <img src={contractImg} alt="Gestione Progetti" className="service-card-image" />
+            </div>
             <h3>Gestione Progetti</h3>
             <p>Organizza e monitora tutti i tuoi progetti edilizi in un'unica piattaforma</p>
           </div>
@@ -67,11 +73,14 @@ const Home = () => {
         </div>
       </section>
 
-      <section id="funzionalita" className="features">
+      <section id="funzionalita" className="features-section">
         <h2>Funzionalità Principali</h2>
         <div className="features-container">
           <div className="feature">
-            <div className="placeholder-image">Dashboard</div>
+            <div className="feature-image-wrapper">
+              <img src={dashboardImg} alt="Dashboard Preview" className="feature-image" />
+              <div className="feature-image-overlay"></div>
+            </div>
             <div className="feature-content">
               <h3>Dashboard Intuitiva</h3>
               <p>Visualizza tutti i tuoi progetti e le attività in un'unica schermata</p>
@@ -92,7 +101,10 @@ const Home = () => {
                 <li>Condivisione semplificata</li>
               </ul>
             </div>
-            <div className="placeholder-image">Documenti</div>
+            <div className="feature-image-wrapper">
+              <img src={documentsImg} alt="Gestione Documenti" className="feature-image" />
+              <div className="feature-image-overlay"></div>
+            </div>
           </div>
         </div>
       </section>
