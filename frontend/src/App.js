@@ -5,6 +5,7 @@ import Auth from './components/Auth';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Settings from './components/Settings';
+import Demo from './components/Demo';
 import { LanguageProvider } from './contexts/LanguageContext';
 import './App.css';
 
@@ -27,6 +28,7 @@ function App() {
       <div className="App">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/demo" element={<Demo />} />
           <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login />} />
           <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Auth />} />
           <Route 

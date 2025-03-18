@@ -21,10 +21,7 @@ const Home = () => {
             {isAuthenticated ? (
               <Link to="/dashboard" className="login-btn">Dashboard</Link>
             ) : (
-              <>
-                <Link to="/login" className="login-btn">Accedi</Link>
-                <Link to="/register" className="register-btn">Registrati</Link>
-              </>
+              <Link to="/login" className="login-btn">Accedi</Link>
             )}
           </div>
         </div>
@@ -38,9 +35,9 @@ const Home = () => {
             {isAuthenticated ? (
               <Link to="/dashboard" className="cta-button">Vai alla Dashboard</Link>
             ) : (
-              <Link to="/register" className="cta-button">Inizia Gratuitamente</Link>
+              <Link to="/register" className="cta-button">Inizia</Link>
             )}
-            <a href="#demo" className="demo-button">Guarda la Demo</a>
+            <Link to="/demo" className="demo-button">Guarda la Demo</Link>
           </div>
         </div>
       </section>

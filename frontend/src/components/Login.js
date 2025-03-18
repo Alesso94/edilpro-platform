@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './Auth.css';
+import { Link } from 'react-router-dom';
 
 const Login = () => {
-  const [email, setEmail] = useState('admin@edilconnect.it');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const [apiStatus, setApiStatus] = useState('checking');
+  const [showDevTools, setShowDevTools] = useState(false);
 
   // Controllo se il backend è raggiungibile
   useEffect(() => {
@@ -60,15 +62,12 @@ const Login = () => {
       setLoading(false);
       
       if (err.response) {
-        // Il server ha risposto con uno stato diverso da 2xx
         console.error('Risposta di errore dal server:', err.response.data);
         setError(err.response.data.message || 'Login fallito. Controlla email e password.');
       } else if (err.request) {
-        // La richiesta è stata fatta ma non è stata ricevuta alcuna risposta
         console.error('Nessuna risposta ricevuta:', err.request);
         setError('Impossibile raggiungere il server. Verifica la connessione.');
       } else {
-        // Si è verificato un errore nella configurazione della richiesta
         setError('Errore di richiesta: ' + err.message);
       }
     }
@@ -84,10 +83,15 @@ const Login = () => {
     }, 500);
   };
 
+  // Funzione per mostrare/nascondere gli strumenti di sviluppo
+  const toggleDevTools = () => {
+    setShowDevTools(!showDevTools);
+  };
+
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h2 className="auth-logo">EdilConnect</h2>
+        <h2 className="auth-logo" onDoubleClick={toggleDevTools}>EdilConnect</h2>
         <h3>Accedi</h3>
         
         {apiStatus === 'offline' && (
@@ -125,26 +129,28 @@ const Login = () => {
           </button>
         </form>
         
-        <div className="test-login-section">
-          <p>Accedi con le credenziali di test:</p>
-          <button 
-            className="test-login-button" 
-            onClick={handleTestLogin}
-            disabled={loading || apiStatus === 'offline'}
-          >
-            Accedi come utente test
-          </button>
-          <div className="test-credentials">
-            <p>Email: admin@edilconnect.it</p>
-            <p>Password: password123</p>
+        {showDevTools && (
+          <div className="test-login-section">
+            <p>Accedi con le credenziali di test:</p>
+            <button 
+              className="test-login-button" 
+              onClick={handleTestLogin}
+              disabled={loading || apiStatus === 'offline'}
+            >
+              Accedi come utente test
+            </button>
+            <div className="test-credentials">
+              <p>Email: admin@edilconnect.it</p>
+              <p>Password: password123</p>
+            </div>
           </div>
-        </div>
+        )}
         
-        <p className="toggle-auth">
+        <p style={{ marginTop: '20px', textAlign: 'center' }}>
           Non hai un account? 
-          <a href="/register" style={{ marginLeft: '5px', color: '#1e3c72' }}>
+          <Link to="/register" style={{ marginLeft: '5px', color: '#1e3c72' }}>
             Registrati
-          </a>
+          </Link>
         </p>
       </div>
     </div>
