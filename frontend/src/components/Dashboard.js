@@ -127,10 +127,15 @@ const Dashboard = () => {
     navigate('/login');
   };
 
+  const handleHomeClick = (e) => {
+    e.preventDefault();
+    window.location.href = '/';
+  };
+
   return (
     <div className="dashboard">
       <nav className="dashboard-nav">
-        <div className="logo">{t.navbar.logo}</div>
+        <a href="/" onClick={handleHomeClick} className="logo">{t.navbar.logo}</a>
         <div className="nav-links">
           <Link 
             to="/dashboard" 

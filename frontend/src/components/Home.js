@@ -1,321 +1,147 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { FaUserCircle, FaBuilding, FaUsers, FaFileAlt, FaArrowRight, FaCheck, FaEuroSign, FaFile, FaCreditCard, FaCalendar } from 'react-icons/fa';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import './Home.css';
-import heroImage from '../assets/images/ProgettazioneEdilizia.jpg';
 
 const Home = () => {
-    const navigate = useNavigate();
-    const [selectedService, setSelectedService] = useState(null);
+  const isAuthenticated = localStorage.getItem('token') !== null;
 
-    const handleStartNow = () => {
-        navigate('/auth');
-    };
-
-    const handleStartChat = (e) => {
-        e.preventDefault(); // Previene comportamenti indesiderati
-        console.log('Clicking chat button'); // Debug log
-        
-        try {
-            const userStr = localStorage.getItem('user');
-            const token = localStorage.getItem('token');
-            
-            if (userStr && token) {
-                console.log('User is authenticated, navigating to chat');
-                navigate('/chat');
-            } else {
-                console.log('User is not authenticated, navigating to auth');
-                navigate('/auth', { 
-                    state: { 
-                        redirectTo: '/chat',
-                        message: 'Effettua l\'accesso per utilizzare la chat' 
-                    } 
-                });
-            }
-        } catch (error) {
-            console.error('Error in handleStartChat:', error);
-            navigate('/auth', { 
-                state: { 
-                    redirectTo: '/chat',
-                    message: 'Effettua l\'accesso per utilizzare la chat' 
-                } 
-            });
-        }
-    };
-
-    const scrollToServices = () => {
-        const servicesSection = document.querySelector('.services');
-        servicesSection.scrollIntoView({ behavior: 'smooth' });
-    };
-
-    const handleServiceSelect = (service) => {
-        setSelectedService(service);
-    };
-
-    const handleProfessionalsClick = () => {
-        navigate('/professionals');
-    };
-
-    // Nuove funzioni per collegare i pulsanti
-    const handleProjectsClick = () => {
-        // Controlla se l'utente è autenticato
-        const token = localStorage.getItem('token');
-        if (token) {
-            navigate('/projects');
-        } else {
-            navigate('/auth', { 
-                state: { 
-                    redirectTo: '/projects',
-                    message: 'Effettua l\'accesso per gestire i tuoi progetti' 
-                } 
-            });
-        }
-    };
-
-    const handleDocumentsClick = () => {
-        // Controlla se l'utente è autenticato
-        const token = localStorage.getItem('token');
-        if (token) {
-            navigate('/projects'); // Reindirizza ai progetti dove si possono gestire i documenti
-        } else {
-            navigate('/auth', { 
-                state: { 
-                    redirectTo: '/projects',
-                    message: 'Effettua l\'accesso per gestire i tuoi documenti' 
-                } 
-            });
-        }
-    };
-
-    const handleConsultingClick = () => {
-        navigate('/professionals'); // Reindirizza alla pagina dei professionisti per consulenza
-    };
-
-    const handleRequestQuote = (type) => {
-        // Controlla se l'utente è autenticato
-        const token = localStorage.getItem('token');
-        if (token) {
-            // Reindirizza alla pagina di richiesta preventivo o contatta un professionista
-            navigate('/professionals', { 
-                state: { 
-                    requestType: type
-                } 
-            });
-        } else {
-            navigate('/auth', { 
-                state: { 
-                    redirectTo: '/professionals',
-                    message: 'Effettua l\'accesso per richiedere un preventivo' 
-                } 
-            });
-        }
-    };
-
-    const handleBookConsultation = () => {
-        // Controlla se l'utente è autenticato
-        const token = localStorage.getItem('token');
-        if (token) {
-            // Reindirizza alla pagina di prenotazione consulenza
-            navigate('/professionals', { 
-                state: { 
-                    requestType: 'financing'
-                } 
-            });
-        } else {
-            navigate('/auth', { 
-                state: { 
-                    redirectTo: '/professionals',
-                    message: 'Effettua l\'accesso per prenotare una consulenza' 
-                } 
-            });
-        }
-    };
-
-    const handleLearnMore = () => {
-        // Reindirizza a una pagina informativa sui bonus edilizi
-        navigate('/professionals', { 
-            state: { 
-                requestType: 'bonus'
-            } 
-        });
-    };
-
-    return (
-        <div className="home">
-            <section className="hero">
-                <div className="hero-background" style={{ backgroundImage: `url(${heroImage})` }}>
-                    <div className="hero-overlay"></div>
-                </div>
-                <div className="hero-content">
-                    <div className="hero-text-container">
-                        <h1 className="animate-slide-up">
-                            La piattaforma per i professionisti dell'edilizia
-                        </h1>
-                        <p className="animate-slide-up-delay">
-                            Gestisci progetti, collabora con altri professionisti e ottimizza il tuo lavoro
-                        </p>
-                        <div className="hero-features animate-slide-up-delay-2">
-                            <div className="feature-item">
-                                <FaCheck className="feature-icon" />
-                                <span>Gestione progetti avanzata</span>
-                            </div>
-                            <div className="feature-item">
-                                <FaCheck className="feature-icon" />
-                                <span>Collaborazione in tempo reale</span>
-                            </div>
-                            <div className="feature-item">
-                                <FaCheck className="feature-icon" />
-                                <span>Documenti e CAD integrati</span>
-                            </div>
-                        </div>
-                        <div className="hero-buttons animate-slide-up-delay-3">
-                            <button onClick={handleStartNow} className="primary-btn">
-                                Inizia Ora
-                                <FaArrowRight className="btn-icon" />
-                            </button>
-                            <button onClick={scrollToServices} className="secondary-btn">
-                                Scopri di più
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section className="stats">
-                <div className="stats-container">
-                    <div className="stat-item clickable" onClick={handleProjectsClick}>
-                        <FaBuilding className="stat-icon" />
-                        <div className="stat-number">500+</div>
-                        <div className="stat-label">Progetti Completati</div>
-                    </div>
-                    <div className="stat-item clickable" onClick={handleProfessionalsClick}>
-                        <FaUsers className="stat-icon" />
-                        <div className="stat-number">1000+</div>
-                        <div className="stat-label">Professionisti</div>
-                    </div>
-                    <div className="stat-item clickable" onClick={handleDocumentsClick}>
-                        <FaFileAlt className="stat-icon" />
-                        <div className="stat-number">5000+</div>
-                        <div className="stat-label">Documenti Gestiti</div>
-                    </div>
-                </div>
-            </section>
-
-            <section className="services">
-                <h2>I Nostri Servizi</h2>
-                <div className="services-grid">
-                    <div className="service-card clickable" onClick={handleProjectsClick}>
-                        <FaBuilding className="service-icon" />
-                        <h3>Gestione Progetti</h3>
-                        <p>Organizza e monitora i tuoi progetti edilizi in modo efficiente</p>
-                    </div>
-                    <div className="service-card clickable" onClick={handleDocumentsClick}>
-                        <FaFileAlt className="service-icon" />
-                        <h3>Gestione Documenti</h3>
-                        <p>Archivia e gestisci documenti e progetti CAD in modo sicuro</p>
-                    </div>
-                    <div className="service-card clickable" onClick={handleConsultingClick}>
-                        <FaUsers className="service-icon" />
-                        <h3>Consulenza</h3>
-                        <p>Ricevi supporto e consulenza dai nostri professionisti qualificati</p>
-                    </div>
-                </div>
-            </section>
-
-            <section className="public-services">
-                <h2>Servizi per il Pubblico</h2>
-                <div className="services-tabs">
-                    <button 
-                        className={`tab-btn ${selectedService === 'documents' ? 'active' : ''}`}
-                        onClick={() => handleServiceSelect('documents')}
-                    >
-                        <FaFile /> Documenti Singoli
-                    </button>
-                    <button 
-                        className={`tab-btn ${selectedService === 'financing' ? 'active' : ''}`}
-                        onClick={() => handleServiceSelect('financing')}
-                    >
-                        <FaEuroSign /> Finanziamenti
-                    </button>
-                </div>
-
-                {selectedService === 'documents' && (
-                    <div className="service-options">
-                        <div className="service-card pricing-card">
-                            <h3>Documenti Tecnici</h3>
-                            <div className="price">da €50</div>
-                            <ul className="features-list">
-                                <li><FaCheck /> Relazioni Tecniche</li>
-                                <li><FaCheck /> Certificazioni</li>
-                                <li><FaCheck /> Perizie</li>
-                                <li><FaCheck /> Documenti Catastali</li>
-                            </ul>
-                            <button className="service-btn" onClick={() => handleRequestQuote('technical')}>
-                                <FaCreditCard /> Richiedi Preventivo
-                            </button>
-                        </div>
-                        <div className="service-card pricing-card">
-                            <h3>Progetti CAD</h3>
-                            <div className="price">da €150</div>
-                            <ul className="features-list">
-                                <li><FaCheck /> Planimetrie</li>
-                                <li><FaCheck /> Disegni Tecnici</li>
-                                <li><FaCheck /> Modelli 3D</li>
-                                <li><FaCheck /> Rendering</li>
-                            </ul>
-                            <button className="service-btn" onClick={() => handleRequestQuote('cad')}>
-                                <FaCreditCard /> Richiedi Preventivo
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {selectedService === 'financing' && (
-                    <div className="service-options">
-                        <div className="service-card financing-card">
-                            <h3>Finanziamento Progetti</h3>
-                            <div className="price">Tassi da 3.5%</div>
-                            <ul className="features-list">
-                                <li><FaCheck /> Rate Personalizzate</li>
-                                <li><FaCheck /> Consulenza Dedicata</li>
-                                <li><FaCheck /> Processo Semplificato</li>
-                                <li><FaCheck /> Tempi Rapidi</li>
-                            </ul>
-                            <button className="service-btn" onClick={handleBookConsultation}>
-                                <FaCalendar /> Prenota Consulenza
-                            </button>
-                        </div>
-                        <div className="service-card financing-card">
-                            <h3>Bonus Edilizi</h3>
-                            <div className="price">Consulenza Gratuita</div>
-                            <ul className="features-list">
-                                <li><FaCheck /> Superbonus 110%</li>
-                                <li><FaCheck /> Ecobonus</li>
-                                <li><FaCheck /> Bonus Ristrutturazioni</li>
-                                <li><FaCheck /> Cessione del Credito</li>
-                            </ul>
-                            <button className="service-btn" onClick={handleLearnMore}>
-                                <FaCalendar /> Scopri di Più
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </section>
-
-            <section className="cta">
-                <div className="cta-content">
-                    <h2>Pronto per iniziare?</h2>
-                    <p>Unisciti a migliaia di professionisti che hanno già scelto la nostra piattaforma</p>
-                    <button onClick={handleStartNow} className="cta-button">
-                        Inizia Ora <FaArrowRight style={{ marginLeft: '10px' }} />
-                    </button>
-                </div>
-            </section>
+  return (
+    <div className="home">
+      <nav className="home-nav">
+        <div className="nav-content">
+          <div className="logo">EdilConnect</div>
+          <div className="nav-links">
+            <a href="#servizi">Servizi</a>
+            <a href="#funzionalita">Funzionalità</a>
+            <a href="#chi-siamo">Chi Siamo</a>
+            {isAuthenticated ? (
+              <Link to="/dashboard" className="login-btn">Dashboard</Link>
+            ) : (
+              <>
+                <Link to="/login" className="login-btn">Accedi</Link>
+                <Link to="/register" className="register-btn">Registrati</Link>
+              </>
+            )}
+          </div>
         </div>
-    );
+      </nav>
+
+      <section className="hero">
+        <div className="hero-content">
+          <h1>Gestisci i tuoi progetti edilizi in modo intelligente</h1>
+          <p>La piattaforma all-in-one per professionisti dell'edilizia: architetti, ingegneri, geometri e imprenditori</p>
+          <div className="hero-buttons">
+            {isAuthenticated ? (
+              <Link to="/dashboard" className="cta-button">Vai alla Dashboard</Link>
+            ) : (
+              <Link to="/register" className="cta-button">Inizia Gratuitamente</Link>
+            )}
+            <a href="#demo" className="demo-button">Guarda la Demo</a>
+          </div>
+        </div>
+      </section>
+
+      <section id="servizi" className="services">
+        <h2>I Nostri Servizi</h2>
+        <div className="services-grid">
+          <div className="service-card">
+            <div className="service-icon">📋</div>
+            <h3>Gestione Progetti</h3>
+            <p>Organizza e monitora tutti i tuoi progetti edilizi in un'unica piattaforma</p>
+          </div>
+          <div className="service-card">
+            <div className="service-icon">👥</div>
+            <h3>Collaborazione Team</h3>
+            <p>Collabora in tempo reale con il tuo team e i tuoi partner</p>
+          </div>
+          <div className="service-card">
+            <div className="service-icon">📊</div>
+            <h3>Monitoraggio Progressi</h3>
+            <p>Tieni traccia dell'avanzamento dei lavori e del budget in tempo reale</p>
+          </div>
+          <div className="service-card">
+            <div className="service-icon">📱</div>
+            <h3>Accesso Mobile</h3>
+            <p>Gestisci i tuoi progetti ovunque tu sia, da qualsiasi dispositivo</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="funzionalita" className="features">
+        <h2>Funzionalità Principali</h2>
+        <div className="features-container">
+          <div className="feature">
+            <div className="placeholder-image">Dashboard</div>
+            <div className="feature-content">
+              <h3>Dashboard Intuitiva</h3>
+              <p>Visualizza tutti i tuoi progetti e le attività in un'unica schermata</p>
+              <ul>
+                <li>Panoramica progetti in tempo reale</li>
+                <li>Gestione task e scadenze</li>
+                <li>Indicatori di performance</li>
+              </ul>
+            </div>
+          </div>
+          <div className="feature reverse">
+            <div className="feature-content">
+              <h3>Gestione Documenti</h3>
+              <p>Organizza e condividi facilmente tutti i documenti di progetto</p>
+              <ul>
+                <li>Archiviazione sicura</li>
+                <li>Controllo versioni</li>
+                <li>Condivisione semplificata</li>
+              </ul>
+            </div>
+            <div className="placeholder-image">Documenti</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="chi-siamo" className="about">
+        <div className="about-content">
+          <h2>Chi Siamo</h2>
+          <p>EdilConnect nasce dall'esigenza di semplificare la gestione dei progetti edilizi, offrendo uno strumento completo e intuitivo per tutti i professionisti del settore.</p>
+          <div className="stats">
+            <div className="stat">
+              <span className="stat-number">500+</span>
+              <span className="stat-label">Progetti Gestiti</span>
+            </div>
+            <div className="stat">
+              <span className="stat-number">1000+</span>
+              <span className="stat-label">Utenti Attivi</span>
+            </div>
+            <div className="stat">
+              <span className="stat-number">98%</span>
+              <span className="stat-label">Clienti Soddisfatti</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer className="footer">
+        <div className="footer-content">
+          <div className="footer-section">
+            <h4>EdilConnect</h4>
+            <p>La piattaforma per i professionisti dell'edilizia</p>
+          </div>
+          <div className="footer-section">
+            <h4>Link Utili</h4>
+            <a href="#servizi">Servizi</a>
+            <a href="#funzionalita">Funzionalità</a>
+            <a href="#chi-siamo">Chi Siamo</a>
+          </div>
+          <div className="footer-section">
+            <h4>Contatti</h4>
+            <p>Email: info@edilconnect.it</p>
+            <p>Tel: +39 XXX XXX XXXX</p>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <p>&copy; 2024 EdilConnect. Tutti i diritti riservati.</p>
+        </div>
+      </footer>
+    </div>
+  );
 };
 
-export default Home;
-
-
-
+export default Home; 

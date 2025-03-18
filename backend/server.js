@@ -20,6 +20,7 @@ const usersRoutes = require('./routes/users');
 const projectsRoutes = require('./routes/projects');
 const documentsRoutes = require('./routes/documents');
 const professionalsRoutes = require('./routes/professionals');
+const settingsRoutes = require('./routes/settings');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -43,7 +44,14 @@ const cadDir = path.join(uploadDir, 'cad');
     }
 });
 
-app.use(cors());
+// Configurazione CORS
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:3003', '*'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(bodyParser.json());
 
 // Configurazione storage per i file
@@ -220,6 +228,12 @@ app.use('/api/users', usersRoutes);
 app.use('/api/projects', projectsRoutes);
 app.use('/api/documents', documentsRoutes);
 app.use('/api/professionals', professionalsRoutes);
+app.use('/api/settings', settingsRoutes);
+
+// Endpoint di test per verificare che il server sia raggiungibile
+app.get('/api', (req, res) => {
+  res.json({ message: 'API server is running' });
+});
 
 // API per i documenti
 app.post('/api/projects/:id/documents', authenticateToken, upload.array('files'), async (req, res) => {

@@ -139,4 +139,32 @@ router.post('/logout', auth, async (req, res) => {
     }
 });
 
+// GET /api/users/me - Ottieni profilo utente
+router.get('/me', auth, async (req, res) => {
+    try {
+        res.json(req.user);
+    } catch (error) {
+        res.status(500).json({ message: 'Errore nel recupero dei dati utente' });
+    }
+});
+
+// PATCH /api/users/me - Aggiorna profilo utente
+router.patch('/me', auth, async (req, res) => {
+    const updates = Object.keys(req.body);
+    const allowedUpdates = ['name', 'profession', 'phone'];
+    const isValidOperation = updates.every(update => allowedUpdates.includes(update));
+
+    if (!isValidOperation) {
+        return res.status(400).json({ message: 'Aggiornamenti non validi' });
+    }
+
+    try {
+        updates.forEach(update => req.user[update] = req.body[update]);
+        await req.user.save();
+        res.json(req.user);
+    } catch (error) {
+        res.status(400).json({ message: 'Errore nell\'aggiornamento del profilo' });
+    }
+});
+
 module.exports = router; 

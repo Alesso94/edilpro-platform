@@ -67,9 +67,6 @@ const userSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Rimuoviamo eventuali indici duplicati prima di creare quello nuovo
-userSchema.index({ email: 1 }, { unique: true });
-
 // Hash della password prima del salvataggio
 userSchema.pre('save', async function (next) {
     const user = this;

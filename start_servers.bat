@@ -2,7 +2,7 @@
 echo Avvio dei server in corso...
 
 :: Imposto il percorso assoluto del progetto
-set PROJECT_PATH=C:\Users\aless\Desktop\edilizia_platform
+set PROJECT_PATH=C:\Users\aless\Desktop\edilizia_platform_backup_2
 
 :: Avvio del backend
 echo Avvio del backend...

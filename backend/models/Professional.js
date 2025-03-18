@@ -78,7 +78,6 @@ const professionalSchema = new mongoose.Schema({
 });
 
 // Indice per migliorare le prestazioni delle query
-professionalSchema.index({ user: 1 });
 professionalSchema.index({ profession: 1 });
 professionalSchema.index({ specializations: 'text' });
 
