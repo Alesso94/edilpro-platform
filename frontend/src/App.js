@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Home from './components/Home';
 import Auth from './components/Auth';
 import Login from './components/Login';
@@ -11,7 +11,6 @@ import './App.css';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
-  const navigate = useNavigate();
   
   // Verifica lo stato di autenticazione quando cambia il token
   useEffect(() => {
