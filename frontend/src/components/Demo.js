@@ -8,21 +8,6 @@ const Demo = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Sequenza demo automatica
-  useEffect(() => {
-    if (isPlaying) {
-      const timer = setTimeout(() => {
-        if (currentStep < demoSteps.length - 1) {
-          setCurrentStep(prev => prev + 1);
-        } else {
-          setIsPlaying(false);
-        }
-      }, 3000); // 3 secondi per step
-
-      return () => clearTimeout(timer);
-    }
-  }, [currentStep, isPlaying]);
-
   const demoSteps = [
     {
       title: 'Dashboard Overview',
@@ -100,6 +85,21 @@ const Demo = () => {
       )
     }
   ];
+
+  // Sequenza demo automatica
+  useEffect(() => {
+    if (isPlaying) {
+      const timer = setTimeout(() => {
+        if (currentStep < demoSteps.length - 1) {
+          setCurrentStep(prev => prev + 1);
+        } else {
+          setIsPlaying(false);
+        }
+      }, 3000); // 3 secondi per step
+
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep, isPlaying, demoSteps.length]);
 
   return (
     <div className="demo-container">
