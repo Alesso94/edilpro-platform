@@ -23,14 +23,35 @@ const professionalsRoutes = require('./routes/professionals');
 const settingsRoutes = require('./routes/settings');
 
 const app = express();
-const port = process.env.PORT || 3002;
+const port = process.env.PORT || 10000;
 const JWT_SECRET = process.env.JWT_SECRET;
 const MONGODB_URI = process.env.MONGODB_URI;
 
+if (!MONGODB_URI) {
+    console.error('MONGODB_URI is not defined in environment variables');
+    process.exit(1);
+}
+
 // Connessione a MongoDB
 mongoose.connect(MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+    .then(() => {
+        console.log('Connected to MongoDB successfully');
+        console.log('Database:', mongoose.connection.db.databaseName);
+        console.log('Host:', mongoose.connection.host);
+    })
+    .catch(err => {
+        console.error('MongoDB connection error:', err);
+        process.exit(1);
+    });
+
+// Gestione degli errori di connessione
+mongoose.connection.on('error', err => {
+    console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.log('MongoDB disconnected');
+});
 
 // Crea le cartelle necessarie se non esistono
 const uploadDir = path.join(__dirname, 'uploads');
@@ -48,11 +69,9 @@ const cadDir = path.join(uploadDir, 'cad');
 app.use(cors({
   origin: [
     'http://localhost:3000', 
-    'http://localhost:3002', 
-    'http://localhost:3003',
+    'http://localhost:10000', 
     'https://edilpro-platform.onrender.com',
-    'https://edilpro-platform.vercel.app',
-    '*'
+    'https://edilpro-platform.vercel.app'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
