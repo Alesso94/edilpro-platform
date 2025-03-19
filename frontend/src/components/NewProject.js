@@ -16,8 +16,8 @@ const NewProject = () => {
     address: '',
     city: '',
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,8 +29,8 @@ const NewProject = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+    setIsLoading(true);
+    setFormError(null);
 
     try {
       const token = localStorage.getItem('token');
@@ -45,17 +45,135 @@ const NewProject = () => {
         }
       });
 
-      navigate('/projects');
+      navigate('/dashboard');
     } catch (error) {
-      setError(error.response?.data?.message || 'An error occurred');
+      setFormError(error.response?.data?.message || 'Si è verificato un errore');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="new-project-container">
-      {/* Render your form here */}
+      <h2>Crea Nuovo Progetto</h2>
+      
+      {formError && <div className="error-message">{formError}</div>}
+      
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label htmlFor="name">Nome Progetto*</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="description">Descrizione</label>
+          <textarea
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            rows="3"
+          />
+        </div>
+        
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="startDate">Data Inizio*</label>
+            <input
+              type="date"
+              id="startDate"
+              name="startDate"
+              value={formData.startDate}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="endDate">Data Fine Prevista</label>
+            <input
+              type="date"
+              id="endDate"
+              name="endDate"
+              value={formData.endDate}
+              onChange={handleChange}
+            />
+          </div>
+        </div>
+        
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="client">Cliente*</label>
+            <input
+              type="text"
+              id="client"
+              name="client"
+              value={formData.client}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="budget">Budget (€)</label>
+            <input
+              type="number"
+              id="budget"
+              name="budget"
+              value={formData.budget}
+              onChange={handleChange}
+              min="0"
+              step="1000"
+            />
+          </div>
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="address">Indirizzo</label>
+          <input
+            type="text"
+            id="address"
+            name="address"
+            value={formData.address}
+            onChange={handleChange}
+          />
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="city">Città</label>
+          <input
+            type="text"
+            id="city"
+            name="city"
+            value={formData.city}
+            onChange={handleChange}
+          />
+        </div>
+        
+        <div className="form-actions">
+          <button 
+            type="button" 
+            className="cancel-btn"
+            onClick={() => navigate('/dashboard')}
+          >
+            Annulla
+          </button>
+          <button 
+            type="submit" 
+            className="submit-btn"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Creazione in corso...' : 'Crea Progetto'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

@@ -9,7 +9,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [apiStatus, setApiStatus] = useState('checking');
   const [showDevTools, setShowDevTools] = useState(false);
 
@@ -39,7 +39,7 @@ const Login = () => {
     e.preventDefault();
     setError('');
     setSuccessMsg('Tentativo di login in corso...');
-    setLoading(true);
+    setIsLoading(true);
 
     try {
       console.log('Tentativo di login con:', { email, password });
@@ -60,7 +60,7 @@ const Login = () => {
       }, 1000);
     } catch (err) {
       console.error('Errore durante il login:', err);
-      setLoading(false);
+      setIsLoading(false);
       
       if (err.response) {
         console.error('Risposta di errore dal server:', err.response.data);
@@ -112,7 +112,7 @@ const Login = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              disabled={loading}
+              disabled={isLoading}
             />
           </div>
           <div className="form-group">
@@ -122,11 +122,11 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              disabled={loading}
+              disabled={isLoading}
             />
           </div>
-          <button type="submit" className="submit-button" disabled={loading || apiStatus === 'offline'}>
-            {loading ? 'Accesso in corso...' : 'Accedi'}
+          <button type="submit" className="submit-button" disabled={isLoading || apiStatus === 'offline'}>
+            {isLoading ? 'Accesso in corso...' : 'Accedi'}
           </button>
         </form>
         
@@ -136,7 +136,7 @@ const Login = () => {
             <button 
               className="test-login-button" 
               onClick={handleTestLogin}
-              disabled={loading || apiStatus === 'offline'}
+              disabled={isLoading || apiStatus === 'offline'}
             >
               Accedi come utente test
             </button>

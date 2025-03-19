@@ -5,7 +5,7 @@ import './Profile.css';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({
@@ -14,28 +14,28 @@ const Profile = () => {
     phone: ''
   });
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_URL}/api/users/me`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        setUser(response.data);
-        setFormData({
-          name: response.data.name || '',
-          profession: response.data.profession || '',
-          phone: response.data.phone || ''
-        });
-        setLoading(false);
-      } catch (err) {
-        console.error('Errore nel caricamento dei dati utente:', err);
-        setError('Errore nel caricamento dei dati utente');
-        setLoading(false);
-      }
-    };
+  const fetchUserData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/users/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setUser(response.data);
+      setFormData({
+        name: response.data.name || '',
+        profession: response.data.profession || '',
+        phone: response.data.phone || ''
+      });
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Errore nel caricamento dei dati utente:', err);
+      setError('Errore nel caricamento dei dati utente');
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchUserData();
   }, []);
 
@@ -69,7 +69,7 @@ const Profile = () => {
     return role; // Fallback
   };
 
-  if (loading) {
+  if (isLoading) {
     return <div className="profile-container loading">Caricamento profilo...</div>;
   }
 
