@@ -228,6 +228,31 @@ app.post('/api/auth/verify', async (req, res) => {
     }
 });
 
+// Middleware di autenticazione
+const authenticateToken = async (req, res, next) => {
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+
+        if (!token) {
+            return res.status(401).json({ message: 'Token di autenticazione mancante' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findOne({ _id: decoded._id, 'tokens.token': token });
+
+        if (!user) {
+            throw new Error();
+        }
+
+        req.token = token;
+        req.user = user;
+        next();
+    } catch (error) {
+        res.status(403).json({ message: 'Token non valido' });
+    }
+};
+
 // API per i documenti
 app.post('/api/projects/:id/documents', authenticateToken, upload.array('files'), async (req, res) => {
     try {
