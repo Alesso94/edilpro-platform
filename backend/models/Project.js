@@ -49,17 +49,21 @@ const projectSchema = new mongoose.Schema({
         max: 100
     },
     tasks: [taskSchema],
-    user: {
+    owner: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
-    }
+    },
+    collaborators: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }]
 }, {
     timestamps: true
 });
 
 // Indice per migliorare le prestazioni delle query
-projectSchema.index({ user: 1, status: 1 });
+projectSchema.index({ owner: 1, status: 1 });
 projectSchema.index({ title: 'text', description: 'text' }); // Per la ricerca testuale
 
 const Project = mongoose.model('Project', projectSchema);

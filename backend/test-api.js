@@ -1,76 +1,63 @@
 const axios = require('axios');
 
-const API_URL = 'http://127.0.0.1:10000/api';
+const API_URL = 'https://edilpro-backend.onrender.com/api';
 
-async function testAPIs() {
+const testAPI = async () => {
     try {
-        console.log('Starting API tests...\n');
-
-        // Test 1: Verifica che il server sia attivo
+        // Test 1: Verifica se il server è attivo
         console.log('Test 1: Verifica server attivo');
-        const baseResponse = await axios.get(`${API_URL}`);
-        console.log('Status:', baseResponse.status);
-        console.log('Response:', baseResponse.data);
-        console.log('✓ Server is running\n');
+        const response = await axios.get(API_URL);
+        console.log('Response:', response.data);
 
-        // Test 2: Registrazione nuovo utente
-        console.log('Test 2: Registrazione utente');
-        const registerData = {
-            email: 'test6@example.com',
-            password: 'test123',
-            name: 'Test User 6',
-            profession: 'Architetto',
-            license: 'ABC123'
-        };
-        const registerResponse = await axios.post(`${API_URL}/auth/register`, registerData);
-        console.log('Status:', registerResponse.status);
-        console.log('Response:', registerResponse.data);
-        console.log('✓ Registration successful\n');
-
-        // Test 3: Verifica account
-        console.log('Test 3: Verifica account');
-        const verificationToken = registerResponse.data.verificationToken;
-        const verifyResponse = await axios.post(`${API_URL}/auth/verify`, {
-            token: verificationToken
-        });
-        console.log('Status:', verifyResponse.status);
-        console.log('Response:', verifyResponse.data);
-        console.log('✓ Account verified\n');
-
-        // Test 4: Login
-        console.log('Test 4: Login');
+        // Test 2: Login con utente esistente
+        console.log('\nTest 2: Login');
         const loginData = {
-            email: 'test6@example.com',
+            email: 'test7@example.com',
             password: 'test123'
         };
-        const loginResponse = await axios.post(`${API_URL}/auth/login`, loginData);
-        console.log('Status:', loginResponse.status);
-        console.log('Response:', loginResponse.data);
-        console.log('✓ Login successful\n');
-
-        // Test 5: Accesso endpoint protetto
-        console.log('Test 5: Accesso endpoint protetto');
-        const token = loginResponse.data.token;
-        const protectedResponse = await axios.get(`${API_URL}/projects`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        console.log('Status:', protectedResponse.status);
-        console.log('Response:', protectedResponse.data);
-        console.log('✓ Protected endpoint accessed successfully\n');
-
-        console.log('All tests completed successfully! ✓');
-
-    } catch (error) {
-        console.error('\nTest failed!');
-        console.error('Error:', error.message);
         
-        if (error.response) {
-            console.error('Status:', error.response.status);
-            console.error('Response:', error.response.data);
-        }
-    }
-}
+        const loginResponse = await axios.post(`${API_URL}/auth/login`, loginData);
+        console.log('Login Response:', loginResponse.data);
 
-testAPIs(); 
+        // Test 3: Creazione nuovo progetto
+        console.log('\nTest 3: Creazione nuovo progetto');
+        const token = loginResponse.data.token;
+        const projectData = {
+            title: 'Villa Moderna',
+            description: 'Progetto di ristrutturazione villa unifamiliare',
+            startDate: '2024-04-01',
+            endDate: '2024-08-31',
+            budget: 350000,
+            status: 'In Corso',
+            category: 'Ristrutturazione',
+            owner: loginResponse.data.user._id,
+            tasks: [
+                { name: 'Rilievo stato di fatto', completed: false },
+                { name: 'Progetto preliminare', completed: false },
+                { name: 'Pratiche comunali', completed: false }
+            ]
+        };
+
+        const createProjectResponse = await axios.post(`${API_URL}/projects`, projectData, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        console.log('Create Project Response:', createProjectResponse.data);
+
+        // Test 4: Recupero progetti
+        console.log('\nTest 4: Recupero progetti');
+        const projectsResponse = await axios.get(`${API_URL}/projects`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        console.log('Projects List Response:', projectsResponse.data);
+
+        console.log('\nTutti i test completati con successo! ✓');
+    } catch (error) {
+        console.error('\nErrore durante i test:', error.response ? {
+            status: error.response.status,
+            headers: error.response.headers,
+            data: error.response.data
+        } : error.message);
+    }
+};
+
+testAPI(); 
