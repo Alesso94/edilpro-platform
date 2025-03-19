@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import it from '../translations/it';
 import en from '../translations/en';
 
-const translations = { it, en };
+const availableTranslations = { it, en };
 
 const LanguageContext = createContext();
 
@@ -32,7 +32,7 @@ export const LanguageProvider = ({ children }) => {
     }, [language]);
 
     const changeLanguage = (newLanguage) => {
-        if (newLanguage in { it, en }) {
+        if (newLanguage in availableTranslations) {
             setLanguage(newLanguage);
         }
     };

@@ -83,7 +83,7 @@ function Settings() {
 
     useEffect(() => {
         fetchSettings();
-    }, [navigate]);
+    }, [navigate, fetchSettings]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -172,7 +172,7 @@ function Settings() {
         return () => {
             // Non rimuoviamo le proprietà al dismount perché vogliamo che la risoluzione persista
         };
-    }, [settings?.resolution]);
+    }, [settings]);
 
     // Stili CSS globali per il ridimensionamento
     useEffect(() => {
