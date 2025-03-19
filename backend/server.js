@@ -130,7 +130,19 @@ let users = [
     }
 ];
 
-// API di autenticazione
+// Protezione delle API esistenti
+app.use('/api/users', usersRoutes);
+app.use('/api/projects', projectsRoutes);
+app.use('/api/documents', documentsRoutes);
+app.use('/api/professionals', professionalsRoutes);
+app.use('/api/settings', settingsRoutes);
+
+// Endpoint di test
+app.get('/api', (req, res) => {
+    res.json({ message: 'API server is running' });
+});
+
+// Endpoint di autenticazione
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { email, password, name, profession, license } = req.body;
@@ -171,6 +183,25 @@ app.post('/api/auth/register', async (req, res) => {
     }
 });
 
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const user = await User.findByCredentials(email, password);
+        
+        if (!user.isVerified) {
+            return res.status(403).json({ message: 'Account non verificato. Verifica la tua email.' });
+        }
+
+        const token = await user.generateAuthToken();
+        res.json({
+            user: user.toJSON(),
+            token
+        });
+    } catch (error) {
+        res.status(401).json({ message: 'Credenziali non valide' });
+    }
+});
+
 app.post('/api/auth/verify', async (req, res) => {
     try {
         const { token } = req.body;
@@ -195,70 +226,6 @@ app.post('/api/auth/verify', async (req, res) => {
     } catch (error) {
         res.status(400).json({ message: 'Errore durante la verifica', error: error.message });
     }
-});
-
-app.post('/api/auth/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = await User.findByCredentials(email, password);
-        
-        if (!user.isVerified) {
-            return res.status(403).json({ message: 'Account non verificato. Verifica la tua email.' });
-        }
-
-        const token = await user.generateAuthToken();
-        res.json({
-            user: user.toJSON(),
-            token
-        });
-    } catch (error) {
-        res.status(401).json({ message: 'Credenziali non valide' });
-    }
-});
-
-// Middleware di autenticazione
-const authenticateToken = async (req, res, next) => {
-    try {
-        const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1];
-
-        if (!token) {
-            return res.status(401).json({ message: 'Token di autenticazione mancante' });
-        }
-
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findOne({ _id: decoded._id, 'tokens.token': token });
-
-        if (!user) {
-            throw new Error();
-        }
-
-        req.token = token;
-        req.user = user;
-        next();
-    } catch (error) {
-        res.status(403).json({ message: 'Token non valido' });
-    }
-};
-
-// Protezione delle API esistenti
-app.use('/api/auth', authRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/documents', documentRoutes);
-app.use('/api/projects/:id/documents', authenticateToken);
-app.use('/api/projects/:id/cad', authenticateToken);
-app.use('/api/projects/:id/comments', authenticateToken);
-
-// Rotte
-app.use('/api/users', usersRoutes);
-app.use('/api/projects', projectsRoutes);
-app.use('/api/documents', documentsRoutes);
-app.use('/api/professionals', professionalsRoutes);
-app.use('/api/settings', settingsRoutes);
-
-// Endpoint di test per verificare che il server sia raggiungibile
-app.get('/api', (req, res) => {
-  res.json({ message: 'API server is running' });
 });
 
 // API per i documenti
