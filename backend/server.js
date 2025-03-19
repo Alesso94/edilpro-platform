@@ -46,7 +46,14 @@ const cadDir = path.join(uploadDir, 'cad');
 
 // Configurazione CORS
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:3003', '*'],
+  origin: [
+    'http://localhost:3000', 
+    'http://localhost:3002', 
+    'http://localhost:3003',
+    'https://edilpro-platform.onrender.com',
+    'https://edilpro-platform.vercel.app',
+    '*'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
