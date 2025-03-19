@@ -2,8 +2,11 @@ services:
   - type: web
     name: edilpro-backend
     env: node
-    buildCommand: cd backend && npm install
-    startCommand: cd backend && npm start
+    buildCommand: |
+      cd backend
+      npm install
+      npm install -g nodemon
+    startCommand: cd backend && nodemon server.js
     envVars:
       - key: NODE_ENV
         value: production
