@@ -41,12 +41,8 @@ function Settings() {
         fileNamingConvention: 'project-date-version'
     });
     const [message, setMessage] = useState('');
-    const [loading, setLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
-
-    useEffect(() => {
-        fetchSettings();
-    }, []);
 
     const fetchSettings = async () => {
         try {
@@ -67,7 +63,7 @@ function Settings() {
             
             console.log('Risposta dal server:', response.data);
             setSettings(response.data);
-            setLoading(false);
+            setIsLoading(false);
         } catch (error) {
             console.error('Errore dettagliato:', {
                 message: error.message,
@@ -81,9 +77,13 @@ function Settings() {
             } else {
                 setMessage(`Errore nel caricamento delle impostazioni: ${error.response?.data?.message || error.message}`);
             }
-            setLoading(false);
+            setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchSettings();
+    }, [navigate]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -172,7 +172,7 @@ function Settings() {
         return () => {
             // Non rimuoviamo le proprietà al dismount perché vogliamo che la risoluzione persista
         };
-    }, [settings.resolution]);
+    }, [settings?.resolution]);
 
     // Stili CSS globali per il ridimensionamento
     useEffect(() => {
@@ -207,7 +207,7 @@ function Settings() {
         };
     }, []);
 
-    if (loading) {
+    if (isLoading) {
         return <div className="settings-container">{t.settings.messages.loading}</div>;
     }
 
