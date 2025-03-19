@@ -83,7 +83,8 @@ function Settings() {
 
     useEffect(() => {
         fetchSettings();
-    }, [navigate, fetchSettings]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [navigate]); // Rimuovo fetchSettings dalle dipendenze e uso un commento per disabilitare l'avviso
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
